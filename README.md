@@ -2,7 +2,6 @@
 
 A microservice-based web application for University of Cincinnati students to share, browse, and manage recipes with secure authentication, scalable search, and personalized digital cookbooks.
 
----
 
 ## 📌 Table of Contents
 1. [Team & Abstract](#team--abstract)  
@@ -19,7 +18,6 @@ A microservice-based web application for University of Cincinnati students to sh
 12. [Budget](#budget)  
 13. [Appendix](#appendix)
 
----
 
 ## Team & Abstract
 
@@ -33,7 +31,6 @@ A microservice-based web application for University of Cincinnati students to sh
 ### Project Abstract
 Team KTN is developing a Recipe Sharing Web Application for UC students using a microservice architecture. The application provides secure authentication, recipe CRUD, Elasticsearch-powered search, and personalized digital cookbooks. Focus areas include scalability, security (Auth0), cloud deployment (AWS/Azure), and cultural inclusivity.
 
----
 
 ## Project Description
 This project is a microservice-based platform where UC students can:
@@ -44,7 +41,6 @@ This project is a microservice-based platform where UC students can:
 
 The architecture includes separate services for authentication, recipe management, and search, ensuring scalability, security, and community-focused usability.
 
----
 
 ## User Stories
 
@@ -53,7 +49,6 @@ The architecture includes separate services for authentication, recipe managemen
 3. **As a user**, I want to save recipes to a personal collection.  
 4. **As a recipe creator**, I want to edit/manage my previously submitted recipes.
 
----
 
 ## Design Diagrams Overview
 
@@ -79,7 +74,6 @@ Workflow:
 - Emits **New Recipe Event** → Search Service updates the index
 <img width="975" height="372" alt="image" src="https://github.com/user-attachments/assets/966cfa63-f477-4951-b51b-3d66b8ed2069" />
 
----
 
 ## Project Tasks
 
@@ -106,7 +100,6 @@ Workflow:
 |19|Integrate FE with backend APIs|Thao & Nhat|
 |20|Final system validation under load|Khoa & Nhat|
 
----
 
 ## Timeline
 
@@ -119,7 +112,6 @@ Workflow:
 |M5|Feature Complete|Mar 27, 2026|25 weeks|
 |M6|System Validation & Documentation|Apr 28, 2026|30 weeks|
 
----
 
 ## Effort Matrix
 
@@ -146,7 +138,6 @@ Workflow:
 |19|10%|45%|45%|
 |20|50%|40%|10%|
 
----
 
 ## ABET Concerns Essay
 Constraints from several topical areas will significantly shape the viable solutions for our
@@ -196,7 +187,6 @@ experiences.
 - Provides accessible meal ideas to UC students  
 - Encourages cultural exchange and community engagement
 
----
 
 ## PPT Slideshow Summary
 
@@ -210,7 +200,6 @@ experiences.
 8. Effort Matrix Overview  
 9. Expected Demo for Expo  
 
----
 
 ## Self-Assessments
 My senior design project is a microservice-based web application for University of
@@ -277,7 +266,6 @@ constructive feedback, and helping my teammates when needed. I will evaluate my 
 not just by what I produced, but by how my contributions positively impacted the entire
 team's success.
 
----
 
 ## Professional Biographies
 
@@ -306,7 +294,6 @@ For my capstone project, I am seeking to build a **microservice-based cookbook o
 - **Cloud Infrastructure:** ~$200 (free-tier credits)  
 - **Expenses to Date:** $0  
 
----
 
 ## Appendix
 
