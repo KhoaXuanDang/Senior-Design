@@ -281,14 +281,11 @@ team's success.
 
 ## Professional Biographies
 
-# Khoa Xuan Dang
----
+## Khoa Xuan Dang
 I'm a dedicated and results-driven computer science student at the **University of Cincinnati**. With a strong foundation in computer science principles and extensive hands-on experience, I specialize in **full-stack development**, **cloud technologies**, and **machine learning**. I have a proven track record of building robust, scalable systems that solve real-world problems and significantly improve operational efficiency.
----
 ## Contact Information
 * **Email:** `dangkx@mail.uc.edu`
 * **GitHub:** [github.com/KhoaXuanDang](https://github.com/KhoaXuanDang)
----
 ## Co-op Work Experience
 ### **Matson Money** | Software Engineering Intern
 *March 2025 - Present*
@@ -299,10 +296,8 @@ I'm a dedicated and results-driven computer science student at the **University 
 *May 2024 - December 2024*
 * Designed and developed core full-stack modules using **Java Spring Boot**, **CockroachDB**, and **ReactJS**.
 * Wrote comprehensive mock-based tests and DB sanity checks, achieving **95% test coverage**.
----
 ## Project Sought
 For my capstone project, I am seeking to build a **microservice-based cookbook or recipe application**. I aim to design a system with decoupled services for user authentication, recipe management, and search. This project would allow me to apply my skills in **Docker**, **Kubernetes**, **Flask**, and **Redis** to create a scalable and resilient architecture. My goal is to develop a production-grade application that demonstrates my expertise in full-stack and DevOps practices.
----
 
 ## Budget
 
