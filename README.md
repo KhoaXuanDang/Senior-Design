@@ -287,6 +287,38 @@ I'm a dedicated and results-driven computer science student at the **University 
 ## Project Sought
 For my capstone project, I am seeking to build a **microservice-based cookbook or recipe application**. I aim to design a system with decoupled services for user authentication, recipe management, and search. This project would allow me to apply my skills in **Docker**, **Kubernetes**, **Flask**, and **Redis** to create a scalable and resilient architecture. My goal is to develop a production-grade application that demonstrates my expertise in full-stack and DevOps practices.
 
+## Nhat Pham
+## Contact Information
+* **Email:** `phamn2@mail.uc.edu`
+## Co-op Work Experience
+### **Siemens** | Software Engineer Intern
+*May 2025 - August 2025*
+* Authored a Test Plan from scratch for a **Teamcenter** product feature, partnering with a senior quality engineer to define success criteria.
+* Engineered the integration of **Storybook** onto a critical internal website with a mentor to improve UI development and testing.
+* Optimized the backend **MongoDB** structure by relocating images to a separate collection, freeing space and allowing the database working set to focus on high-speed retrieval of core report data.
+* Developed and deployed a suite of internal web features specifically designed to automate QA workflow bottlenecks, resulting in a projected **80% increase** in quality engineers' operational efficiency.
+
+### **Siemens** | Software Engineer Intern
+*August 2024 - December 2024*
+* Collaborated with a senior engineer and 5 quality engineers to enhance an internal website to help quality engineers streamline the analysis process of their reports, improving productivity by **50%**.
+* Constructed automation scripts with **JavaScript**, **Cucumber**, and **Gherkin** for quality engineers to test on our product, **Teamcenter**, replacing manual testing for different scenarios.
+
+### **Elevance Health (Anthem, Inc.)** | Software Engineer Intern
+*May 2024 - August 2024*
+* Constructed and developed with 5 senior associates an automation process with **Python** for data extraction from **Kafka's** error logs.
+* Designed and implemented **REST APIs** and a frontend UI, enabling managers to interact with the **AWS RDS** database through email notifications, reducing data loss tickets by **50%** and improving reprocessing efficiency by **90%**.
+* Collaborated with a senior associate to develop a proof-of-concept feature to store users' input of **GraphQL** for predictive analysis, using **Python** and **S3** for storage.
+
+### **nVent** | Software Engineer Intern
+*January 2024 - April 2024*
+* Designed and developed a Jira report visualization tool in **Excel** with **Visual Basic for Applications (VBA)**, replacing Roadmunk and reducing monthly subscriptions by **93%**.
+* Collaborated with a colleague to solve a technical difficulty in developing a device that visualizes data from a company's product using **Raspberry Pi** for display and **JavaScript** for back-end, resulting in successful approval for a conference demonstration.
+
+### **Elevance Health (Anthem, Inc.)** | Software Engineer Intern
+*May 2023 - August 2023*
+* Designed and implemented a real-time data pipeline in **Python** to process over **15,000 logs per minute** from **AWS RDS**, capturing members journey data for the AI team.
+* Successfully deployed the pipeline to **AWS EC2** and integrated data to **Kafka** after validating efficacy through a proof of concept demonstration.
+  
 ## Budget
 
 - **Software Licenses:** $0 (FOSS)  
