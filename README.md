@@ -318,6 +318,26 @@ For my capstone project, I am seeking to build a **microservice-based cookbook o
 *May 2023 - August 2023*
 * Designed and implemented a real-time data pipeline in **Python** to process over **15,000 logs per minute** from **AWS RDS**, capturing members journey data for the AI team.
 * Successfully deployed the pipeline to **AWS EC2** and integrated data to **Kafka** after validating efficacy through a proof of concept demonstration.
+
+## Thao Hoang
+
+## Contact Information
+* **Email:** `hoangt4@mail.uc.edu`
+
+## Co-op & Research Experience
+
+### **AtriCure, Inc.** | Applications and Data Analyst Co-op  
+*January 2023 – August 2025*  
+* Delivered key data consumption insights to cross-functional departments, informing architectural decisions for a new centralized data storage system.  
+* Built and maintained enterprise dashboards using **Power BI** and **SQL**, establishing best practices for both implementation and administration.  
+* Led the support process for data management and analytics tools, ensuring reliable operations across departments.
+
+### **Université de Lorraine** | Machine Learning Research Intern  
+*January 2025 – May 2025*  
+* Evaluated **50+ research studies** on mapping CVEs to **MITRE ATT&CK**, identifying **15 major methodological trends and challenges** that shaped strategic recommendations for future research.  
+* Created a high-quality dataset of **1,000+ manually mapped CVE cases**, ensuring accurate alignment with ATT&CK tactics and techniques to support model training and validation.  
+* Contributed to developing **NLP-driven machine learning models** to automate CVE-to-ATT&CK mapping, with the goal of improving accuracy, scalability, and efficiency in cyber threat intelligence workflows.
+
   
 ## Budget
 
