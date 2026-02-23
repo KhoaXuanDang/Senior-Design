@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { getCookbook, removeRecipeFromCookbook } from '@/lib/api';
+import { getCookbook, removeRecipeFromCookbook, getStoredToken } from '@/lib/api';
 import type { CookbookRecipe } from '@/lib/types';
 import { RecipeCard } from '@/components/RecipeCard';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,14 @@ export default function CookbookPage() {
     if (isAuthenticated && !authLoading) {
       // Small delay to ensure any navigation state is settled
       const timer = setTimeout(() => {
+        // If there's no stored token, clear auth and redirect to login
+        const token = getStoredToken();
+        if (!token) {
+          setUser(null);
+          router.push('/auth/login');
+          return;
+        }
+
         fetchCookbook();
       }, 100);
       return () => clearTimeout(timer);
@@ -65,6 +73,14 @@ export default function CookbookPage() {
     if (!confirm('Remove this recipe from your cookbook?')) return;
 
     try {
+      // Guard: ensure token exists before calling API
+      const token = getStoredToken();
+      if (!token) {
+        setUser(null);
+        alert('Your session has expired. Please log in again.');
+        router.push('/auth/login');
+        return;
+      }
       setRemoving(recipeId);
       await removeRecipeFromCookbook(recipeId);
       setCookbookRecipes((prev) => prev.filter((item) => item.recipe_id !== recipeId));

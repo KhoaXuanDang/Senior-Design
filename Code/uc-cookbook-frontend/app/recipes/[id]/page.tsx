@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { getRecipeById, saveRecipeToCookbook } from '@/lib/api';
+import { getRecipeById, saveRecipeToCookbook, getStoredToken } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Recipe } from '@/lib/types';
 import { Clock, ChefHat, User, Calendar, BookmarkPlus, ArrowLeft, Loader2 } from 'lucide-react';
@@ -44,6 +44,14 @@ export default function RecipeDetailPage() {
   const handleSaveRecipe = async () => {
     if (!recipe || !isAuthenticated) return;
 
+    // Guard: ensure token exists before calling API
+    const token = getStoredToken();
+    if (!token) {
+      setUser(null);
+      alert('Your session has expired. Please log in again to save recipes.');
+      router.push('/auth/login');
+      return;
+    }
     try {
       setSaving(true);
       await saveRecipeToCookbook(recipe.id);

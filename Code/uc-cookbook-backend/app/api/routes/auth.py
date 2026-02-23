@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.models import User
-from app.api.deps import get_current_user
 from app.schemas.auth import UserCreate, UserLogin, AuthResponse, UserResponse
 from app.schemas.common import SuccessResponse
 from app.services.auth_service import AuthService
@@ -106,23 +105,9 @@ async def login(
     )
 
 
-@router.get("/me", response_model=UserResponse)
-async def get_current_user_info(
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get current authenticated user information
-    
-    Args:
-        current_user: Authenticated user (from JWT cookie)
-        
-    Returns:
-        Current user information
-        
-    Raises:
-        HTTPException: If not authenticated
-    """
-    return UserResponse.model_validate(current_user)
+# `/auth/me` endpoint removed. Frontend may use the `access_token` returned by
+# `/auth/login` (or the `user` object returned in the login response) and send
+# it via an `Authorization: Bearer <token>` header for authenticated requests.
 
 
 @router.post("/logout", response_model=SuccessResponse)
