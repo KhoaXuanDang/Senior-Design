@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 export default function RecipeDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, setUser } = useAuth();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +50,13 @@ export default function RecipeDetailPage() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err: any) {
+      // If it's a 401 error (unauthorized), clear auth and redirect to login
+      if (err.status === 401 || err.message?.includes('Could not validate credentials')) {
+        setUser(null);
+        alert('Your session has expired. Please log in again to save recipes.');
+        router.push('/auth/login');
+        return;
+      }
       alert(err.message || 'Failed to save recipe');
       console.error('Error saving recipe:', err);
     } finally {

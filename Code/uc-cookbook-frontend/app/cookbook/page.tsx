@@ -12,7 +12,7 @@ import { Card, CardContent } from '@/components/ui/card';
 
 export default function CookbookPage() {
   const router = useRouter();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, setUser } = useAuth();
   const [cookbookRecipes, setCookbookRecipes] = useState<CookbookRecipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,10 +26,14 @@ export default function CookbookPage() {
   }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchCookbook();
+    if (isAuthenticated && !authLoading) {
+      // Small delay to ensure any navigation state is settled
+      const timer = setTimeout(() => {
+        fetchCookbook();
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading]);
 
   const fetchCookbook = async () => {
     try {
@@ -38,8 +42,20 @@ export default function CookbookPage() {
       const data = await getCookbook();
       setCookbookRecipes(data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load cookbook');
-      console.error('Error fetching cookbook:', err);
+      // If it's a 401 error (unauthorized), the cookie is missing or invalid
+      if (err.status === 401 || err.message?.includes('Could not validate credentials')) {
+        console.error('Authentication error - cookie missing or invalid:', err);
+        // Clear the stale user state and redirect to login
+        setUser(null);
+        // Show a brief message then redirect
+        setError('Your session has expired. Redirecting to login...');
+        setTimeout(() => {
+          router.push('/auth/login');
+        }, 1500);
+      } else {
+        setError(err.message || 'Failed to load cookbook');
+        console.error('Error fetching cookbook:', err);
+      }
     } finally {
       setLoading(false);
     }
@@ -53,6 +69,13 @@ export default function CookbookPage() {
       await removeRecipeFromCookbook(recipeId);
       setCookbookRecipes((prev) => prev.filter((item) => item.recipe_id !== recipeId));
     } catch (err: any) {
+      // If it's a 401 error (unauthorized), clear auth and redirect to login
+      if (err.status === 401 || err.message?.includes('Could not validate credentials')) {
+        setUser(null);
+        alert('Your session has expired. Please log in again.');
+        router.push('/auth/login');
+        return;
+      }
       alert(err.message || 'Failed to remove recipe');
       console.error('Error removing recipe:', err);
     } finally {
@@ -86,9 +109,19 @@ export default function CookbookPage() {
         <div className="bg-destructive/10 text-destructive rounded-lg p-6 mb-6">
           <p className="font-medium">Error loading cookbook</p>
           <p className="text-sm mt-1">{error}</p>
-          <Button onClick={fetchCookbook} variant="outline" className="mt-4">
-            Try Again
-          </Button>
+          <div className="flex gap-2 mt-4">
+            <Button onClick={fetchCookbook} variant="outline">
+              Try Again
+            </Button>
+            {error.includes('session has expired') && (
+              <Button onClick={() => {
+                setUser(null);
+                router.push('/auth/login');
+              }} variant="default">
+                Go to Login
+              </Button>
+            )}
+          </div>
         </div>
       )}
 

@@ -32,7 +32,7 @@ const recipeSchema = z.object({
 
 export default function ContributeRecipePage() {
   const router = useRouter();
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading, setUser } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -133,7 +133,16 @@ export default function ContributeRecipePage() {
         });
         setErrors(fieldErrors);
       } else {
-        setErrors({ submit: err.message || 'Failed to create recipe' });
+        // If it's a 401 error (unauthorized), clear auth and redirect to login
+        if (err.status === 401 || err.message?.includes('Could not validate credentials')) {
+          setUser(null);
+          setErrors({ submit: 'Your session has expired. Please log in again to contribute recipes.' });
+          setTimeout(() => {
+            router.push('/auth/login');
+          }, 2000);
+        } else {
+          setErrors({ submit: err.message || 'Failed to create recipe' });
+        }
       }
       setSubmitting(false);
     }

@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from app.db.session import get_db
+from app.db.models import User
+from app.api.deps import get_current_user
 from app.schemas.auth import UserCreate, UserLogin, AuthResponse, UserResponse
 from app.schemas.common import SuccessResponse
 from app.services.auth_service import AuthService
@@ -39,6 +41,7 @@ async def register(
         httponly=True,
         secure=False,  # Set to True in production with HTTPS
         samesite="lax",
+        path="/",  # Make cookie available for all routes
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
     
@@ -89,6 +92,7 @@ async def login(
         httponly=True,
         secure=False,  # Set to True in production with HTTPS
         samesite="lax",
+        path="/",  # Make cookie available for all routes
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
     
@@ -98,6 +102,25 @@ async def login(
         access_token=token,  # Also return in body for frontend compatibility
         token=token
     )
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_current_user_info(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get current authenticated user information
+    
+    Args:
+        current_user: Authenticated user (from JWT cookie)
+        
+    Returns:
+        Current user information
+        
+    Raises:
+        HTTPException: If not authenticated
+    """
+    return UserResponse.model_validate(current_user)
 
 
 @router.post("/logout", response_model=SuccessResponse)
@@ -111,6 +134,6 @@ async def logout(response: Response):
     Returns:
         Success message
     """
-    response.delete_cookie(key="access_token")
+    response.delete_cookie(key="access_token", path="/")
     
     return SuccessResponse(message="Logout successful")

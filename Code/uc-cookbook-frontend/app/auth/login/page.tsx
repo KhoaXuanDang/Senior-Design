@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
@@ -19,7 +19,15 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser } = useAuth();
+  const { setUser, isAuthenticated } = useAuth();
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/');
+    }
+  }, [isAuthenticated, router]);
+  
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
@@ -40,11 +48,25 @@ export default function LoginPage() {
       // Submit to API
       const response = await login(validatedData);
 
-      // Store user data
-      setUser(response.user);
+      // Debug: Log the response to see what we're getting
+      console.log('Login response:', response);
+      console.log('User data:', response.user);
+      
+      // Check if cookies were set (we can't read httpOnly cookies, but we can check the response)
+      console.log('Login successful - cookie should be set by backend');
 
-      // Redirect to home
-      router.push('/');
+      // Store user data - this updates both state and localStorage
+      setUser(response.user);
+      
+      // Verify user data was stored in localStorage
+      const stored = localStorage.getItem('user');
+      console.log('User set in localStorage:', stored ? 'Yes' : 'No');
+      console.log('User set, redirecting...');
+
+      // Wait a bit longer to ensure cookie is set and state propagates
+      setTimeout(() => {
+        router.replace('/');
+      }, 300);
     } catch (err: any) {
       if (err instanceof z.ZodError) {
         const fieldErrors: Record<string, string> = {};

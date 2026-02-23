@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChefHat, User, LogOut, BookOpen, PlusCircle, Home } from 'lucide-react';
@@ -12,6 +13,14 @@ export function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, setUser } = useAuth();
   const router = useRouter();
+
+  // Debug: Log user data to see what we have
+  useEffect(() => {
+    if (user) {
+      console.log('Navbar - User data:', user);
+      console.log('Navbar - Username:', user.username);
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -70,9 +79,9 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           {isAuthenticated ? (
             <>
-              <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <User className="h-4 w-4" />
-                <span>{user?.username}</span>
+                <span className="font-medium">{user?.username || 'User'}</span>
               </div>
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />

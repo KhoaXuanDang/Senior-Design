@@ -9,6 +9,7 @@ import type {
   CreateRecipeRequest,
   CookbookRecipe,
   ErrorResponse,
+  User,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
@@ -69,6 +70,13 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
     },
     credentials: 'include',
     body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
+export async function getCurrentUser(): Promise<User> {
+  const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    credentials: 'include',
   });
   return handleResponse(response);
 }
