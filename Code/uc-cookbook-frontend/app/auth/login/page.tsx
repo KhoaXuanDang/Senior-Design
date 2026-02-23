@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
-import { getCurrentUser, login } from '@/lib/api';
+import { login } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,19 +55,14 @@ export default function LoginPage() {
       // Check if cookies were set (we can't read httpOnly cookies, but we can check the response)
       console.log('Login successful - cookie should be set by backend');
 
-      // Confirm session with backend to avoid stale local auth
-      try {
-        const me = await getCurrentUser();
-        setUser(me);
-      } catch (sessionError: any) {
-        setUser(null);
-        throw new Error('Login failed to establish a session. Please try again.');
-      }
 
-      // Verify user data was stored in localStorage
-      const stored = localStorage.getItem('user');
-      console.log('User set in localStorage:', stored ? 'Yes' : 'No');
-      console.log('User set, redirecting...');
+      // Use user returned in login response and persist to localStorage via API helper
+      if (response.user) {
+        setUser(response.user);
+      } else {
+        setUser(null);
+        throw new Error('Login did not return user data.');
+      }
 
       // Wait a bit longer to ensure cookie is set and state propagates
       setTimeout(() => {

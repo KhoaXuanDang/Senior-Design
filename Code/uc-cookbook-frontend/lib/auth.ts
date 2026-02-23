@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import type { User } from './types';
-import { getCurrentUser } from './api';
+import { getStoredUser } from './api';
 
 // Client-side auth state management
 export function useAuth() {
@@ -25,32 +25,12 @@ export function useAuth() {
       setLoading(true);
 
       // Hydrate from localStorage for immediate UX
-      const storedUser = localStorage.getItem('user');
+      const storedUser = getStoredUser();
       if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser));
-        } catch (error) {
-          console.error('Failed to parse user data:', error);
-          localStorage.removeItem('user');
-        }
+        setUser(storedUser);
       }
 
-      // Validate session with backend (authoritative)
-      try {
-        const me = await getCurrentUser();
-        if (isMounted) {
-          setAuthUser(me);
-        }
-      } catch (error: any) {
-        // If unauthorized, clear any stale local auth state
-        if (isMounted && (error?.status === 401 || error?.message?.includes('Could not validate credentials'))) {
-          setAuthUser(null);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
+      setLoading(false);
     };
 
     loadUser();

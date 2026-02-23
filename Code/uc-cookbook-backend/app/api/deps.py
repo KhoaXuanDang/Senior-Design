@@ -1,20 +1,32 @@
 from typing import Optional
-from fastapi import Depends, HTTPException, status, Cookie
+from fastapi import Depends, HTTPException, status, Cookie, Header
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.models import User
 from app.core.security import decode_access_token
 
 
-async def get_current_user(
+def _get_token_from_cookie_or_header(
     access_token: Optional[str] = Cookie(None),
+    authorization: Optional[str] = Header(None),
+) -> Optional[str]:
+    """Get JWT from cookie (priority) or Authorization: Bearer header."""
+    if access_token:
+        return access_token
+    if authorization and authorization.startswith("Bearer "):
+        return authorization[7:].strip()
+    return None
+
+
+async def get_current_user(
+    token: Optional[str] = Depends(_get_token_from_cookie_or_header),
     db: Session = Depends(get_db)
 ) -> User:
     """
-    Dependency to get the current authenticated user from JWT cookie.
+    Dependency to get the current authenticated user from JWT cookie or Authorization header.
     
     Args:
-        access_token: JWT token from httpOnly cookie
+        token: JWT from httpOnly cookie or Authorization: Bearer header
         db: Database session
         
     Returns:
@@ -29,16 +41,21 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     
-    if not access_token:
+    if not token:
         raise credentials_exception
     
     # Decode token
-    payload = decode_access_token(access_token)
+    payload = decode_access_token(token)
     if payload is None:
         raise credentials_exception
     
-    user_id: int = payload.get("sub")
+    user_id = payload.get("sub")
     if user_id is None:
+        raise credentials_exception
+    # JWT "sub" can be int or string depending on library
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
         raise credentials_exception
     
     # Get user from database
@@ -50,7 +67,7 @@ async def get_current_user(
 
 
 async def get_current_user_optional(
-    access_token: Optional[str] = Cookie(None),
+    token: Optional[str] = Depends(_get_token_from_cookie_or_header),
     db: Session = Depends(get_db)
 ) -> Optional[User]:
     """
@@ -58,21 +75,25 @@ async def get_current_user_optional(
     Useful for endpoints that work differently for authenticated vs anonymous users.
     
     Args:
-        access_token: JWT token from httpOnly cookie
+        token: JWT from httpOnly cookie or Authorization: Bearer header
         db: Database session
         
     Returns:
         Current user object or None if not authenticated
     """
-    if not access_token:
+    if not token:
         return None
     
-    payload = decode_access_token(access_token)
+    payload = decode_access_token(token)
     if payload is None:
         return None
     
-    user_id: int = payload.get("sub")
+    user_id = payload.get("sub")
     if user_id is None:
+        return None
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
         return None
     
     user = db.query(User).filter(User.id == user_id).first()
