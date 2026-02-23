@@ -35,12 +35,13 @@ async def register(
     token = AuthService.create_user_token(user)
     
     # Set httpOnly cookie
+    # Note: For localhost development, we omit samesite to allow cross-origin cookies
+    # In production with HTTPS, use: samesite="none", secure=True
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
         secure=False,  # Set to True in production with HTTPS
-        samesite="lax",
         path="/",  # Make cookie available for all routes
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
@@ -86,12 +87,13 @@ async def login(
     token = AuthService.create_user_token(user)
     
     # Set httpOnly cookie
+    # Note: For localhost development, we omit samesite to allow cross-origin cookies
+    # In production with HTTPS, use: samesite="none", secure=True
     response.set_cookie(
         key="access_token",
         value=token,
         httponly=True,
         secure=False,  # Set to True in production with HTTPS
-        samesite="lax",
         path="/",  # Make cookie available for all routes
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
