@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import type { User } from './types';
+import { getCurrentUser } from './api';
 
 // Client-side auth state management
 export function useAuth() {
@@ -10,8 +11,20 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user data exists in localStorage
-    const loadUser = () => {
+    let isMounted = true;
+
+    // Listen for auth state changes from other components
+    const handleAuthChange = (event: CustomEvent) => {
+      setUser(event.detail);
+      setLoading(false);
+    };
+
+    window.addEventListener('authStateChanged', handleAuthChange as EventListener);
+
+    const loadUser = async () => {
+      setLoading(true);
+
+      // Hydrate from localStorage for immediate UX
       const storedUser = localStorage.getItem('user');
       if (storedUser) {
         try {
@@ -21,20 +34,29 @@ export function useAuth() {
           localStorage.removeItem('user');
         }
       }
-      setLoading(false);
+
+      // Validate session with backend (authoritative)
+      try {
+        const me = await getCurrentUser();
+        if (isMounted) {
+          setAuthUser(me);
+        }
+      } catch (error: any) {
+        // If unauthorized, clear any stale local auth state
+        if (isMounted && (error?.status === 401 || error?.message?.includes('Could not validate credentials'))) {
+          setAuthUser(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
     };
 
     loadUser();
-
-    // Listen for auth state changes from other components
-    const handleAuthChange = (event: CustomEvent) => {
-      setUser(event.detail);
-      setLoading(false);
-    };
-
-    window.addEventListener('authStateChanged', handleAuthChange as EventListener);
     
     return () => {
+      isMounted = false;
       window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
     };
   }, []);

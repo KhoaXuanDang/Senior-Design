@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
-import { register } from '@/lib/api';
+import { getCurrentUser, register } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,8 +48,14 @@ export default function RegisterPage() {
       const { email, username, password } = validatedData;
       const response = await register({ email, username, password });
 
-      // Store user data
-      setUser(response.user);
+      // Confirm session with backend to avoid stale local auth
+      try {
+        const me = await getCurrentUser();
+        setUser(me);
+      } catch (sessionError: any) {
+        setUser(null);
+        throw new Error('Registration failed to establish a session. Please try again.');
+      }
 
       // Redirect to home
       router.push('/');
