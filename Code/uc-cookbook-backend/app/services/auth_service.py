@@ -85,7 +85,7 @@ class AuthService:
             JWT token string
         """
         token_data = {
-            "sub": user.id,
+            "sub": str(user.id),  # JWT "sub" should be a string per RFC 7519
             "email": user.email
         }
         return create_access_token(token_data)
