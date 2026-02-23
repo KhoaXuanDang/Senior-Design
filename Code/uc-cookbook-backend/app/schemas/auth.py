@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
@@ -47,6 +48,3 @@ class AuthResponse(BaseModel):
     # Frontend expects these fields (even though we use cookies)
     access_token: Optional[str] = None
     token: Optional[str] = None
-
-
-from typing import Optional

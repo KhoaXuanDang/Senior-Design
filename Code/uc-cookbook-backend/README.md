@@ -18,7 +18,7 @@ A FastAPI-based microservice backend for the UC Cookbook application - a recipe 
 - **Server**: Uvicorn
 - **Database**: SQLite with SQLAlchemy ORM
 - **Migrations**: Alembic
-- **Authentication**: JWT (python-jose) + bcrypt (passlib)
+- **Authentication**: JWT (python-jose) + bcrypt
 - **Testing**: pytest + httpx
 
 ## Project Structure
