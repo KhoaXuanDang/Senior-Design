@@ -11,8 +11,6 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
     // Listen for auth state changes from other components
     const handleAuthChange = (event: CustomEvent) => {
       setUser(event.detail);
@@ -21,22 +19,14 @@ export function useAuth() {
 
     window.addEventListener('authStateChanged', handleAuthChange as EventListener);
 
-    const loadUser = async () => {
-      setLoading(true);
+    // Hydrate from localStorage for immediate UX
+    const storedUser = getStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+    }
+    setLoading(false);
 
-      // Hydrate from localStorage for immediate UX
-      const storedUser = getStoredUser();
-      if (storedUser) {
-        setUser(storedUser);
-      }
-
-      setLoading(false);
-    };
-
-    loadUser();
-    
     return () => {
-      isMounted = false;
       window.removeEventListener('authStateChanged', handleAuthChange as EventListener);
     };
   }, []);
