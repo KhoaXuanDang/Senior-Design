@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import type { User } from './types';
-import { getStoredUser } from './api';
+import { getStoredUser, clearAuthStorage } from './api';
 
 // Client-side auth state management
 export function useAuth() {
@@ -48,7 +48,7 @@ export function useAuth() {
       // Dispatch custom event to notify all components of auth state change
       window.dispatchEvent(new CustomEvent('authStateChanged', { detail: userData }));
     } else {
-      localStorage.removeItem('user');
+      clearAuthStorage();
       window.dispatchEvent(new CustomEvent('authStateChanged', { detail: null }));
     }
   };
