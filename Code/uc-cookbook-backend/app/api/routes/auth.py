@@ -33,9 +33,9 @@ async def register(
     # Create token
     token = AuthService.create_user_token(user)
     
-    # Set httpOnly cookie
-    # Note: For localhost development, we omit samesite to allow cross-origin cookies
-    # In production with HTTPS, use: samesite="none", secure=True
+    # Set httpOnly cookie (Starlette defaults samesite="lax" when omitted).
+    # Auth uses Bearer tokens from response body; cookie is secondary.
+    # For cross-origin with HTTPS: samesite="none", secure=True
     response.set_cookie(
         key="access_token",
         value=token,
@@ -85,9 +85,9 @@ async def login(
     # Create token
     token = AuthService.create_user_token(user)
     
-    # Set httpOnly cookie
-    # Note: For localhost development, we omit samesite to allow cross-origin cookies
-    # In production with HTTPS, use: samesite="none", secure=True
+    # Set httpOnly cookie (Starlette defaults samesite="lax" when omitted).
+    # Auth uses Bearer tokens from response body; cookie is secondary.
+    # For cross-origin with HTTPS: samesite="none", secure=True
     response.set_cookie(
         key="access_token",
         value=token,
