@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field, field_validator
 from app.schemas.auth import AuthorResponse
 
@@ -14,6 +14,8 @@ class RecipeBase(BaseModel):
     time_minutes: int = Field(..., ge=1)
     difficulty: str = Field(..., pattern="^(easy|medium|hard)$")
     image_url: Optional[str] = Field(None, max_length=500)
+    is_published: bool = False
+    visibility: Literal["public", "private"] = "public"
     
     @field_validator('difficulty')
     @classmethod
@@ -23,12 +25,12 @@ class RecipeBase(BaseModel):
         return v
 
 
-class RecipeCreate(RecipeBase):
+class CreateRecipeRequest(RecipeBase):
     """Schema for creating a recipe"""
     pass
 
 
-class RecipeUpdate(BaseModel):
+class UpdateRecipeRequest(BaseModel):
     """Schema for updating a recipe (all fields optional)"""
     title: Optional[str] = Field(None, min_length=3, max_length=120)
     description: Optional[str] = None
@@ -38,6 +40,8 @@ class RecipeUpdate(BaseModel):
     time_minutes: Optional[int] = Field(None, ge=1)
     difficulty: Optional[str] = Field(None, pattern="^(easy|medium|hard)$")
     image_url: Optional[str] = None
+    is_published: Optional[bool] = None
+    visibility: Optional[Literal["public", "private"]] = None
 
 
 class RecipeResponse(RecipeBase):
@@ -58,3 +62,8 @@ class RecipesResponse(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+# Backward-compatible aliases used in existing code
+RecipeCreate = CreateRecipeRequest
+RecipeUpdate = UpdateRecipeRequest

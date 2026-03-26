@@ -28,6 +28,8 @@ const recipeSchema = z.object({
   time_minutes: z.number().min(1, 'Time must be at least 1 minute').max(1440),
   difficulty: z.enum(['easy', 'medium', 'hard']),
   image_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
+  is_published: z.boolean(),
+  visibility: z.enum(['public', 'private']),
 });
 
 export default function ContributeRecipePage() {
@@ -45,6 +47,8 @@ export default function ContributeRecipePage() {
     time_minutes: '',
     difficulty: '',
     image_url: '',
+    is_published: false,
+    visibility: 'public' as 'public' | 'private',
   });
 
   // Redirect if not authenticated
@@ -112,6 +116,8 @@ export default function ContributeRecipePage() {
         time_minutes: Number(formData.time_minutes),
         difficulty: formData.difficulty as 'easy' | 'medium' | 'hard',
         image_url: formData.image_url || undefined,
+        is_published: formData.is_published,
+        visibility: formData.visibility,
       };
 
       // Validate with Zod
@@ -214,7 +220,7 @@ export default function ContributeRecipePage() {
         <Card>
           <CardHeader>
             <CardTitle>Recipe Details</CardTitle>
-            <CardDescription>Time, difficulty, and tags</CardDescription>
+            <CardDescription>Time, difficulty, tags, and publishing</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -257,6 +263,40 @@ export default function ContributeRecipePage() {
               />
               <p className="text-xs text-muted-foreground">Separate tags with commas</p>
               {errors.tags && <p className="text-sm text-destructive">{errors.tags}</p>}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="visibility">Visibility</Label>
+                <Select
+                  value={formData.visibility}
+                  onValueChange={(value: 'public' | 'private') => setFormData({ ...formData, visibility: value })}
+                >
+                  <SelectTrigger id="visibility">
+                    <SelectValue placeholder="Select visibility" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Public</SelectItem>
+                    <SelectItem value="private">Private</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.visibility && <p className="text-sm text-destructive">{errors.visibility}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Publish Status</Label>
+                <Button
+                  type="button"
+                  variant={formData.is_published ? 'default' : 'outline'}
+                  className="w-full"
+                  onClick={() => setFormData({ ...formData, is_published: !formData.is_published })}
+                >
+                  {formData.is_published ? 'Published' : 'Draft'}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Draft recipes are only visible to you.
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>

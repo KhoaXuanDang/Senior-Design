@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from app.db.models import CookbookSave, Recipe, User
+from app.services.authorization_service import can_view_recipe
 
 
 class CookbookService:
@@ -30,6 +31,12 @@ class CookbookService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Recipe not found"
+            )
+
+        if not can_view_recipe(recipe, user):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to access this recipe"
             )
         
         # Check if already saved

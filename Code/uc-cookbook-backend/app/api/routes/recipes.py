@@ -3,9 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.models import User
-from app.api.deps import get_current_user
-from app.schemas.recipe import RecipeCreate, RecipeResponse, RecipesResponse
+from app.api.deps import get_current_user, get_current_user_optional
+from app.schemas.recipe import CreateRecipeRequest, UpdateRecipeRequest, RecipeResponse, RecipesResponse
 from app.services.recipe_service import RecipeService
+from app.services.authorization_service import can_view_recipe
 
 router = APIRouter(prefix="/recipes", tags=["Recipes"])
 
@@ -51,7 +52,7 @@ async def get_recipes(
 
 @router.post("", response_model=RecipeResponse, status_code=status.HTTP_201_CREATED)
 async def create_recipe(
-    recipe_data: RecipeCreate,
+    recipe_data: CreateRecipeRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -73,6 +74,7 @@ async def create_recipe(
 @router.get("/{recipe_id}", response_model=RecipeResponse)
 async def get_recipe(
     recipe_id: int,
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
     """
@@ -95,5 +97,30 @@ async def get_recipe(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Recipe not found"
         )
+
+    if not can_view_recipe(recipe, current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to view this recipe"
+        )
     
+    return RecipeResponse.model_validate(recipe)
+
+
+@router.put("/{recipe_id}", response_model=RecipeResponse)
+async def update_recipe(
+    recipe_id: int,
+    recipe_data: UpdateRecipeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    recipe = RecipeService.get_recipe_by_id(db, recipe_id)
+
+    if not recipe:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recipe not found"
+        )
+
+    recipe = RecipeService.update_recipe(db, recipe, recipe_data, current_user)
     return RecipeResponse.model_validate(recipe)

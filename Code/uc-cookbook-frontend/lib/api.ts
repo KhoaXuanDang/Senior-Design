@@ -7,9 +7,16 @@ import type {
   Recipe,
   RecipesResponse,
   CreateRecipeRequest,
+  UpdateRecipeRequest,
   CookbookRecipe,
   ErrorResponse,
   User,
+  RecipeComment,
+  AddCommentRequest,
+  Conversation,
+  StartConversationRequest,
+  Message,
+  SendMessageRequest,
 } from './types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
@@ -180,6 +187,64 @@ export async function getRecipeById(id: number): Promise<Recipe> {
 
 export async function createRecipe(data: CreateRecipeRequest): Promise<Recipe> {
   const response = await makeRequest(`${API_BASE_URL}/recipes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
+export async function updateRecipe(id: number, data: UpdateRecipeRequest): Promise<Recipe> {
+  const response = await makeRequest(`${API_BASE_URL}/recipes/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
+export async function getRecipeComments(recipeId: number): Promise<RecipeComment[]> {
+  const response = await makeRequest(`${API_BASE_URL}/recipes/${recipeId}/comments`);
+  return handleResponse(response);
+}
+
+export async function addRecipeComment(recipeId: number, data: AddCommentRequest): Promise<RecipeComment> {
+  const response = await makeRequest(`${API_BASE_URL}/recipes/${recipeId}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
+export async function deleteRecipeComment(recipeId: number, commentId: number): Promise<{ message: string }> {
+  const response = await makeRequest(`${API_BASE_URL}/recipes/${recipeId}/comments/${commentId}`, {
+    method: 'DELETE',
+  });
+  return handleResponse(response);
+}
+
+export async function startConversation(data: StartConversationRequest): Promise<Conversation> {
+  const response = await makeRequest(`${API_BASE_URL}/conversations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response);
+}
+
+export async function getConversations(): Promise<Conversation[]> {
+  const response = await makeRequest(`${API_BASE_URL}/conversations`);
+  return handleResponse(response);
+}
+
+export async function getConversationMessages(conversationId: number): Promise<Message[]> {
+  const response = await makeRequest(`${API_BASE_URL}/conversations/${conversationId}/messages`);
+  return handleResponse(response);
+}
+
+export async function sendMessage(conversationId: number, data: SendMessageRequest): Promise<Message> {
+  const response = await makeRequest(`${API_BASE_URL}/conversations/${conversationId}/messages`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),

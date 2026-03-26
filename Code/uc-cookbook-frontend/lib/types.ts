@@ -17,6 +17,8 @@ export interface Recipe {
   time_minutes: number;
   difficulty: 'easy' | 'medium' | 'hard';
   image_url?: string;
+  is_published: boolean;
+  visibility: 'public' | 'private';
   author_id: number;
   author?: {
     id: number;
@@ -53,6 +55,21 @@ export interface CreateRecipeRequest {
   time_minutes: number;
   difficulty: 'easy' | 'medium' | 'hard';
   image_url?: string;
+  is_published: boolean;
+  visibility: 'public' | 'private';
+}
+
+export interface UpdateRecipeRequest {
+  title?: string;
+  description?: string;
+  ingredients?: string[];
+  steps?: string[];
+  tags?: string[];
+  time_minutes?: number;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  image_url?: string;
+  is_published?: boolean;
+  visibility?: 'public' | 'private';
 }
 
 export interface RecipesResponse {
@@ -73,4 +90,49 @@ export interface CookbookRecipe {
 export interface ErrorResponse {
   detail: string;
   message?: string;
+}
+
+export interface RecipeComment {
+  id: number;
+  recipe_id: number;
+  user_id: number;
+  content: string;
+  created_at: string;
+  user?: {
+    id: number;
+    username: string;
+  };
+}
+
+export interface AddCommentRequest {
+  content: string;
+}
+
+export interface Conversation {
+  id: number;
+  user_one_id: number;
+  user_two_id: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface StartConversationRequest {
+  recipient_user_id: number;
+  initial_message?: string;
+}
+
+export interface Message {
+  id: number;
+  conversation_id: number;
+  sender_id: number;
+  content: string;
+  created_at: string;
+  sender?: {
+    id: number;
+    username: string;
+  };
+}
+
+export interface SendMessageRequest {
+  content: string;
 }
