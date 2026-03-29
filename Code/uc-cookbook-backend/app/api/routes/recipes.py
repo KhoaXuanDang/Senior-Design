@@ -124,3 +124,18 @@ async def update_recipe(
 
     recipe = RecipeService.update_recipe(db, recipe, recipe_data, current_user)
     return RecipeResponse.model_validate(recipe)
+
+
+@router.delete("/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_recipe(
+    recipe_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    recipe = RecipeService.get_recipe_by_id(db, recipe_id)
+    if not recipe:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recipe not found",
+        )
+    RecipeService.delete_recipe(db, recipe, current_user)

@@ -12,6 +12,7 @@ import {
   deleteRecipeComment,
   setCommentReaction,
   startConversation,
+  deleteRecipe,
 } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Recipe, RecipeComment } from '@/lib/types';
@@ -29,6 +30,7 @@ import {
   Send,
   Trash2,
   Reply,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -51,6 +53,7 @@ export default function RecipeDetailPage() {
   const [replyingToId, setReplyingToId] = useState<number | null>(null);
   const [replyText, setReplyText] = useState('');
   const [reactionBusy, setReactionBusy] = useState<number | null>(null);
+  const [deletingRecipe, setDeletingRecipe] = useState(false);
 
   const REACTION_EMOJIS = ['👍', '❤️', '😂', '🔥'] as const;
 
@@ -209,6 +212,32 @@ export default function RecipeDetailPage() {
       alert('Recipe link copied to clipboard');
     } catch {
       alert('Unable to copy recipe link');
+    }
+  };
+
+  const handleDeleteRecipe = async () => {
+    if (!recipe) return;
+    if (!confirm('Delete this recipe permanently? This cannot be undone.')) return;
+    const token = getStoredToken();
+    if (!token) {
+      setUser(null);
+      router.push('/auth/login');
+      return;
+    }
+    try {
+      setDeletingRecipe(true);
+      await deleteRecipe(recipe.id);
+      router.push('/');
+    } catch (err: unknown) {
+      const anyErr = err as { status?: number; message?: string };
+      if (anyErr.status === 401 || anyErr.message?.includes('Could not validate credentials')) {
+        setUser(null);
+        router.push('/auth/login');
+        return;
+      }
+      alert(anyErr.message || 'Failed to delete recipe');
+    } finally {
+      setDeletingRecipe(false);
     }
   };
 
@@ -560,6 +589,38 @@ export default function RecipeDetailPage() {
                 <CardTitle className="text-lg">Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
+                {isAuthenticated && user?.id === recipe.author_id && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => router.push(`/recipes/${recipe.id}/edit`)}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit recipe
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="w-full"
+                      disabled={deletingRecipe}
+                      onClick={handleDeleteRecipe}
+                    >
+                      {deletingRecipe ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete recipe
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
                 {isAuthenticated && user?.id !== recipe.author_id && (
                   <Button onClick={handleMessageAuthor} className="w-full" variant="outline">
                     <MessageCircle className="h-4 w-4 mr-2" />

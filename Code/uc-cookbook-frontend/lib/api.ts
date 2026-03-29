@@ -220,6 +220,15 @@ export async function updateRecipe(id: number, data: UpdateRecipeRequest): Promi
   return handleResponse(response);
 }
 
+export async function deleteRecipe(id: number): Promise<void> {
+  const response = await makeRequest(`${API_BASE_URL}/recipes/${id}`, {
+    method: 'DELETE',
+  });
+  if (!response.ok) {
+    await handleResponse(response);
+  }
+}
+
 export async function getRecipeComments(recipeId: number): Promise<RecipeComment[]> {
   const response = await makeRequest(`${API_BASE_URL}/recipes/${recipeId}/comments`);
   return handleResponse(response);

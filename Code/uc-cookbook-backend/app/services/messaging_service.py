@@ -81,8 +81,7 @@ class MessagingService:
             content=content,
         )
         db.add(message)
-        db.commit()
-
+        db.flush()  # message id + created_at; keep same transaction as conversation update
         conversation.updated_at = message.created_at
         db.commit()
 
