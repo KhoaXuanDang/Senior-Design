@@ -1,7 +1,7 @@
 from typing import List, Tuple
 from fastapi import HTTPException, status
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.db.models import Conversation, Message, User
 
 
@@ -65,9 +65,13 @@ class MessagingService:
 
     @staticmethod
     def list_messages(db: Session, conversation_id: int) -> List[Message]:
-        return db.query(Message).filter(
-            Message.conversation_id == conversation_id
-        ).order_by(Message.created_at.asc()).all()
+        return (
+            db.query(Message)
+            .options(joinedload(Message.sender))
+            .filter(Message.conversation_id == conversation_id)
+            .order_by(Message.created_at.asc())
+            .all()
+        )
 
     @staticmethod
     def send_message(db: Session, conversation: Conversation, sender: User, content: str) -> Message:
@@ -78,9 +82,13 @@ class MessagingService:
         )
         db.add(message)
         db.commit()
-        db.refresh(message)
 
         conversation.updated_at = message.created_at
         db.commit()
 
-        return message
+        return (
+            db.query(Message)
+            .options(joinedload(Message.sender))
+            .filter(Message.id == message.id)
+            .one()
+        )

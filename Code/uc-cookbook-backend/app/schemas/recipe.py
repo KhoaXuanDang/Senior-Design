@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import List, Optional, Literal
-from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional
+from pydantic import BaseModel, Field
 from app.schemas.auth import AuthorResponse
+from app.db.models import DifficultyEnum, VisibilityEnum
 
 
 class RecipeBase(BaseModel):
@@ -12,17 +13,10 @@ class RecipeBase(BaseModel):
     steps: List[str] = Field(..., min_items=1)
     tags: List[str] = Field(default_factory=list, max_items=10)
     time_minutes: int = Field(..., ge=1)
-    difficulty: str = Field(..., pattern="^(easy|medium|hard)$")
+    difficulty: DifficultyEnum
     image_url: Optional[str] = Field(None, max_length=500)
     is_published: bool = False
-    visibility: Literal["public", "private"] = "public"
-    
-    @field_validator('difficulty')
-    @classmethod
-    def validate_difficulty(cls, v):
-        if v not in ['easy', 'medium', 'hard']:
-            raise ValueError('Difficulty must be easy, medium, or hard')
-        return v
+    visibility: VisibilityEnum = VisibilityEnum.public
 
 
 class CreateRecipeRequest(RecipeBase):
@@ -38,10 +32,10 @@ class UpdateRecipeRequest(BaseModel):
     steps: Optional[List[str]] = None
     tags: Optional[List[str]] = None
     time_minutes: Optional[int] = Field(None, ge=1)
-    difficulty: Optional[str] = Field(None, pattern="^(easy|medium|hard)$")
+    difficulty: Optional[DifficultyEnum] = None
     image_url: Optional[str] = None
     is_published: Optional[bool] = None
-    visibility: Optional[Literal["public", "private"]] = None
+    visibility: Optional[VisibilityEnum] = None
 
 
 class RecipeResponse(RecipeBase):

@@ -38,10 +38,26 @@ def main():
     else:
         print("✓ .env file exists")
     
+    # Show DB status vs models before migrating
+    print("\n📋 Checking database (revision + schema vs models)...")
+    try:
+        subprocess.run(
+            [sys.executable, "scripts/check_db.py"],
+            check=False,
+            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        )
+    except OSError as e:
+        print(f"⚠️  Could not run check_db.py: {e}")
+
     # Run Alembic migrations
     print("\n📊 Running database migrations...")
     try:
-        result = subprocess.run(["alembic", "upgrade", "head"], check=True, capture_output=True, text=True)
+        result = subprocess.run(
+            [sys.executable, "-m", "alembic", "upgrade", "head"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
         print("✓ Database migrations completed")
     except subprocess.CalledProcessError as e:
         print(f"❌ Migration failed: {e}")

@@ -47,8 +47,17 @@ python scripts/setup.py
 
 This will:
 - Create `.env` file if needed
+- Print database status (Alembic revision and any tables/columns missing vs models)
 - Run database migrations
 - Optionally seed the database with sample data
+
+To inspect the database yourself before migrating:
+
+```bash
+python scripts/check_db.py
+```
+
+Run this after pulling code or if you see SQL errors such as `no such column`. Then apply migrations with `alembic upgrade head`.
 
 ### 6. Start the server
 
@@ -85,6 +94,12 @@ pytest --cov=app
 alembic revision --autogenerate -m "description"
 ```
 
+### Check database (revision + schema drift)
+
+```bash
+python scripts/check_db.py
+```
+
 ### Apply migrations
 ```bash
 alembic upgrade head
@@ -118,6 +133,15 @@ python scripts/seed.py
 Make sure virtual environment is activated and dependencies are installed:
 ```bash
 pip install -r requirements.txt
+```
+
+### SQL errors (`no such column`, `no such table`)
+
+The database file is behind the code. Check status, then migrate:
+
+```bash
+python scripts/check_db.py
+alembic upgrade head
 ```
 
 ## Project Structure

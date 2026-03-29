@@ -19,7 +19,11 @@ import type {
   SendMessageRequest,
 } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+/**
+ * Default `/api` uses Next.js rewrites to the backend (see next.config.js). Set
+ * NEXT_PUBLIC_API_BASE_URL to e.g. http://localhost:8000 only if you need a direct URL.
+ */
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? '/api';
 const TOKEN_KEY = 'access_token';
 const USER_KEY = 'user';
 
@@ -99,7 +103,20 @@ async function makeRequest(input: RequestInfo, init: RequestInit = {}) {
   const headers = new Headers(init.headers || {});
   if (token) headers.set('Authorization', `Bearer ${token}`);
   const merged: RequestInit = { ...init, headers };
-  const resp = await fetch(input, merged);
+  let resp: Response;
+  try {
+    resp = await fetch(input, merged);
+  } catch (e) {
+    const hint =
+      typeof e === 'object' && e !== null && 'message' in e
+        ? String((e as Error).message)
+        : String(e);
+    throw new APIError(
+      0,
+      `Cannot reach the API (${API_BASE_URL}). Start the backend (uvicorn on port 8000). ` +
+        `If you use a custom URL, set NEXT_PUBLIC_API_BASE_URL and BACKEND_INTERNAL_URL in .env.local. (${hint})`
+    );
+  }
   // Debug: log 401 responses to help trace unexpected logouts
   if (resp.status === 401) {
     try {
@@ -221,6 +238,22 @@ export async function deleteRecipeComment(recipeId: number, commentId: number): 
   const response = await makeRequest(`${API_BASE_URL}/recipes/${recipeId}/comments/${commentId}`, {
     method: 'DELETE',
   });
+  return handleResponse(response);
+}
+
+export async function setCommentReaction(
+  recipeId: number,
+  commentId: number,
+  emoji: string
+): Promise<RecipeComment> {
+  const response = await makeRequest(
+    `${API_BASE_URL}/recipes/${recipeId}/comments/${commentId}/reactions`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emoji }),
+    }
+  );
   return handleResponse(response);
 }
 

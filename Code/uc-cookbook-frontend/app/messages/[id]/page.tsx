@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { getConversationMessages, sendMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Message } from '@/lib/types';
+import { UserAvatar } from '@/components/UserAvatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -80,21 +81,38 @@ export default function ConversationMessagesPage() {
         <CardContent className="space-y-4">
           {error && <p className="text-sm text-destructive">{error}</p>}
 
-          <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
             {messages.length === 0 ? (
               <p className="text-sm text-muted-foreground">No messages yet.</p>
             ) : (
               messages.map((message) => {
                 const isMine = user?.id === message.sender_id;
+                const label = message.sender?.username || (isMine ? user?.username : 'User') || 'User';
                 return (
                   <div
                     key={message.id}
-                    className={`rounded-lg p-3 ${isMine ? 'bg-primary text-primary-foreground ml-8' : 'bg-muted mr-8'}`}
+                    className={`flex gap-3 ${isMine ? 'flex-row-reverse' : 'flex-row'}`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                    <p className={`text-xs mt-2 ${isMine ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
-                      {new Date(message.created_at).toLocaleString()}
-                    </p>
+                    <UserAvatar username={label} size="md" />
+                    <div
+                      className={`min-w-0 max-w-[85%] rounded-2xl px-4 py-2 ${
+                        isMine
+                          ? 'bg-primary text-primary-foreground rounded-br-md'
+                          : 'bg-muted rounded-bl-md'
+                      }`}
+                    >
+                      {!isMine && (
+                        <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
+                      )}
+                      <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                      <p
+                        className={`text-xs mt-2 ${
+                          isMine ? 'text-primary-foreground/75' : 'text-muted-foreground'
+                        }`}
+                      >
+                        {new Date(message.created_at).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
                 );
               })

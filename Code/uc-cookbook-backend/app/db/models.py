@@ -57,6 +57,7 @@ class User(Base):
         cascade="all, delete-orphan",
     )
     sent_messages = relationship("Message", back_populates="sender", cascade="all, delete-orphan")
+    comment_reactions = relationship("CommentReaction", back_populates="user", cascade="all, delete-orphan")
 
 
 class Recipe(Base):
@@ -110,11 +111,46 @@ class RecipeComment(Base):
     id = Column(Integer, primary_key=True, index=True)
     recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    parent_id = Column(Integer, ForeignKey("recipe_comments.id"), nullable=True)
     content = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     recipe = relationship("Recipe", back_populates="comments")
     user = relationship("User", back_populates="recipe_comments")
+    parent = relationship(
+        "RecipeComment",
+        remote_side=[id],
+        back_populates="replies",
+        foreign_keys=[parent_id],
+    )
+    replies = relationship(
+        "RecipeComment",
+        back_populates="parent",
+        foreign_keys=[parent_id],
+        cascade="all, delete-orphan",
+    )
+    comment_reactions = relationship(
+        "CommentReaction",
+        back_populates="comment",
+        cascade="all, delete-orphan",
+    )
+
+
+class CommentReaction(Base):
+    """Single emoji reaction per user per comment (change by posting again)."""
+    __tablename__ = "comment_reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("recipe_comments.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    emoji = Column(String(16), nullable=False)
+
+    comment = relationship("RecipeComment", back_populates="comment_reactions")
+    user = relationship("User", back_populates="comment_reactions")
+
+    __table_args__ = (
+        UniqueConstraint("comment_id", "user_id", name="uq_comment_reaction_user"),
+    )
 
 
 class Conversation(Base):

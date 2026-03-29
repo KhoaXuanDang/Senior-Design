@@ -92,20 +92,29 @@ export interface ErrorResponse {
   message?: string;
 }
 
+export interface CommentReactionSummary {
+  emoji: string;
+  count: number;
+  reacted_by_me: boolean;
+}
+
 export interface RecipeComment {
   id: number;
   recipe_id: number;
   user_id: number;
+  parent_id?: number | null;
   content: string;
   created_at: string;
   user?: {
     id: number;
     username: string;
   };
+  reactions: CommentReactionSummary[];
 }
 
 export interface AddCommentRequest {
   content: string;
+  parent_id?: number | null;
 }
 
 export interface Conversation {
