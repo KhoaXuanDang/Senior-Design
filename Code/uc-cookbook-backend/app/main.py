@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api.routes import health, auth, recipes, cookbook
+from app.api.routes import health, auth, recipes, cookbook, comments, conversations, messages
 
 # Create FastAPI application
 app = FastAPI(
@@ -26,6 +26,9 @@ app.include_router(health.router, tags=["Health"])
 app.include_router(auth.router, tags=["Authentication"])
 app.include_router(recipes.router, tags=["Recipes"])
 app.include_router(cookbook.router, tags=["Cookbook"])
+app.include_router(comments.router, tags=["Comments"])
+app.include_router(conversations.router, tags=["Conversations"])
+app.include_router(messages.router, tags=["Messages"])
 
 
 @app.get("/")

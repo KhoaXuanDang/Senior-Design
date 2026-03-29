@@ -1,16 +1,16 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, func
+from sqlalchemy import or_
 from fastapi import HTTPException, status
-from app.db.models import Recipe, User
-from app.schemas.recipe import RecipeCreate, RecipeUpdate
+from app.db.models import Recipe, User, VisibilityEnum
+from app.schemas.recipe import CreateRecipeRequest, UpdateRecipeRequest
 
 
 class RecipeService:
     """Service layer for recipe business logic"""
     
     @staticmethod
-    def create_recipe(db: Session, recipe_data: RecipeCreate, user: User) -> Recipe:
+    def create_recipe(db: Session, recipe_data: CreateRecipeRequest, user: User) -> Recipe:
         """
         Create a new recipe
         
@@ -31,6 +31,8 @@ class RecipeService:
             time_minutes=recipe_data.time_minutes,
             difficulty=recipe_data.difficulty,
             image_url=recipe_data.image_url,
+            is_published=recipe_data.is_published,
+            visibility=VisibilityEnum(recipe_data.visibility),
             author_id=user.id
         )
         
@@ -76,7 +78,10 @@ class RecipeService:
         Returns:
             Tuple of (list of recipes, total count)
         """
-        query = db.query(Recipe)
+        query = db.query(Recipe).filter(
+            Recipe.is_published.is_(True),
+            Recipe.visibility == VisibilityEnum.public,
+        )
         
         # Apply filters
         if search:
@@ -107,7 +112,7 @@ class RecipeService:
     def update_recipe(
         db: Session,
         recipe: Recipe,
-        recipe_data: RecipeUpdate,
+        recipe_data: UpdateRecipeRequest,
         user: User
     ) -> Recipe:
         """
@@ -135,6 +140,8 @@ class RecipeService:
         # Update fields
         update_data = recipe_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
+            if field == "visibility" and value is not None:
+                value = VisibilityEnum(value)
             setattr(recipe, field, value)
         
         db.commit()

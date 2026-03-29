@@ -14,7 +14,7 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.db.session import SessionLocal, engine
-from app.db.models import User, Recipe, CookbookSave
+from app.db.models import User, Recipe, CookbookSave, VisibilityEnum
 from app.core.security import get_password_hash
 
 
@@ -316,7 +316,12 @@ def seed_database():
         print("Creating sample recipes...")
         created_recipes = []
         for recipe_data in recipes_data:
-            recipe = Recipe(**recipe_data)
+            data = {
+                **recipe_data,
+                "is_published": True,
+                "visibility": VisibilityEnum.public,
+            }
+            recipe = Recipe(**data)
             db.add(recipe)
             created_recipes.append(recipe)
         

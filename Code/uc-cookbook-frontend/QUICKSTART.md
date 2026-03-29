@@ -41,11 +41,16 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## ⚙️ Configuration
 
-The app is pre-configured to connect to `http://localhost:8000` for the backend API.
+By default the app calls **`/api/...`** on the Next dev server; Next **proxies** those requests to the FastAPI backend (`http://127.0.0.1:8000`). That avoids browser connection issues to port 8000. Start **both** the backend and `npm run dev`.
 
-To change this, edit `.env.local`:
+Optional `.env.local` overrides:
+
 ```
-NEXT_PUBLIC_API_BASE_URL=http://your-backend-url
+# Talk to the backend directly instead of the proxy (advanced)
+# NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+
+# Where Next should proxy /api when the backend is not on 127.0.0.1:8000 (e.g. Docker)
+# BACKEND_INTERNAL_URL=http://127.0.0.1:8000
 ```
 
 ## 📁 Project Structure

@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChefHat, User, LogOut, BookOpen, PlusCircle, Home } from 'lucide-react';
+import { ChefHat, User, LogOut, BookOpen, PlusCircle, Home, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
 import { logout } from '@/lib/api';
@@ -13,14 +12,6 @@ export function Navbar() {
   const pathname = usePathname();
   const { user, isAuthenticated, setUser } = useAuth();
   const router = useRouter();
-
-  // Debug: Log user data to see what we have
-  useEffect(() => {
-    if (user) {
-      console.log('Navbar - User data:', user);
-      console.log('Navbar - Username:', user.username);
-    }
-  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -70,6 +61,15 @@ export function Navbar() {
                 >
                   <BookOpen className="h-4 w-4" />
                   My Cookbook
+                </Link>
+                <Link
+                  href="/messages"
+                  className={`transition-colors hover:text-foreground/80 flex items-center gap-1.5 ${
+                    pathname?.startsWith('/messages') ? 'text-foreground font-medium' : 'text-foreground/60'
+                  }`}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Messages
                 </Link>
               </>
             )}

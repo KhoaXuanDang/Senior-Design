@@ -23,7 +23,7 @@ A modern, microservice-based web application for University of Cincinnati studen
 ## 📋 Prerequisites
 
 - Node.js 18+ and npm
-- Backend API running on `http://localhost:8000` (or configure `NEXT_PUBLIC_API_BASE_URL`)
+- Backend API running on port **8000** (the default frontend uses a Next.js **proxy** at `/api` → `http://127.0.0.1:8000`; override with `NEXT_PUBLIC_API_BASE_URL` if needed)
 
 ## 🔧 Installation
 
@@ -37,14 +37,13 @@ A modern, microservice-based web application for University of Cincinnati studen
    npm install
    ```
 
-3. **Configure environment variables**:
+3. **Configure environment variables** (optional):
    
-   The `.env.local` file is already created with default values:
+   By default, API requests go to **`/api`** on the Next server, which rewrites to the backend. To call the backend directly, create `.env.local`:
    ```
    NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
    ```
-   
-   Update this if your backend API is running on a different URL.
+   If the backend is not at `127.0.0.1:8000`, set `BACKEND_INTERNAL_URL` for the proxy (see `next.config.js`).
 
 ## 🚀 Running the Application
 

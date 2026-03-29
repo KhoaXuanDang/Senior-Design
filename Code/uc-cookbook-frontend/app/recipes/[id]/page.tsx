@@ -3,23 +3,59 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { getRecipeById, saveRecipeToCookbook, getStoredToken } from '@/lib/api';
+import {
+  getRecipeById,
+  saveRecipeToCookbook,
+  getStoredToken,
+  getRecipeComments,
+  addRecipeComment,
+  deleteRecipeComment,
+  setCommentReaction,
+  startConversation,
+  deleteRecipe,
+} from '@/lib/api';
 import { useAuth } from '@/lib/auth';
-import type { Recipe } from '@/lib/types';
-import { Clock, ChefHat, User, Calendar, BookmarkPlus, ArrowLeft, Loader2 } from 'lucide-react';
+import type { Recipe, RecipeComment } from '@/lib/types';
+import { UserAvatar } from '@/components/UserAvatar';
+import {
+  Clock,
+  ChefHat,
+  User,
+  Calendar,
+  BookmarkPlus,
+  ArrowLeft,
+  Loader2,
+  MessageCircle,
+  Share2,
+  Send,
+  Trash2,
+  Reply,
+  Pencil,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function RecipeDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { isAuthenticated, setUser } = useAuth();
+  const { isAuthenticated, user, setUser } = useAuth();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [comments, setComments] = useState<RecipeComment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [newComment, setNewComment] = useState('');
+  const [replyingToId, setReplyingToId] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [reactionBusy, setReactionBusy] = useState<number | null>(null);
+  const [deletingRecipe, setDeletingRecipe] = useState(false);
+
+  const REACTION_EMOJIS = ['👍', '❤️', '😂', '🔥'] as const;
 
   useEffect(() => {
     if (params.id) {
@@ -33,11 +69,24 @@ export default function RecipeDetailPage() {
       setError(null);
       const data = await getRecipeById(Number(params.id));
       setRecipe(data);
+      await fetchComments();
     } catch (err: any) {
       setError(err.message || 'Failed to load recipe');
       console.error('Error fetching recipe:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      setCommentsLoading(true);
+      const data = await getRecipeComments(Number(params.id));
+      setComments(data);
+    } catch {
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
     }
   };
 
@@ -69,6 +118,126 @@ export default function RecipeDetailPage() {
       console.error('Error saving recipe:', err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (!recipe || !newComment.trim()) return;
+
+    try {
+      setCommentSubmitting(true);
+      await addRecipeComment(recipe.id, { content: newComment.trim() });
+      setNewComment('');
+      await fetchComments();
+    } catch (err: any) {
+      alert(err.message || 'Failed to add comment');
+    } finally {
+      setCommentSubmitting(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!recipe) return;
+    try {
+      await deleteRecipeComment(recipe.id, commentId);
+      await fetchComments();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete comment');
+    }
+  };
+
+  const handlePostReply = async () => {
+    if (!recipe || replyingToId == null || !replyText.trim()) return;
+    try {
+      setCommentSubmitting(true);
+      await addRecipeComment(recipe.id, {
+        content: replyText.trim(),
+        parent_id: replyingToId,
+      });
+      setReplyText('');
+      setReplyingToId(null);
+      await fetchComments();
+    } catch (err: any) {
+      alert(err.message || 'Failed to post reply');
+    } finally {
+      setCommentSubmitting(false);
+    }
+  };
+
+  const handleToggleReaction = async (commentId: number, emoji: string) => {
+    if (!recipe) return;
+    try {
+      setReactionBusy(commentId);
+      await setCommentReaction(recipe.id, commentId, emoji);
+      await fetchComments();
+    } catch (err: any) {
+      alert(err.message || 'Failed to update reaction');
+    } finally {
+      setReactionBusy(null);
+    }
+  };
+
+  const childComments = (parentId: number | null) =>
+    comments
+      .filter((c) => (c.parent_id ?? null) === parentId)
+      .sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+
+  const handleMessageAuthor = async () => {
+    if (!recipe?.author_id) return;
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+    if (user?.id === recipe.author_id) return;
+
+    try {
+      const conversation = await startConversation({ recipient_user_id: recipe.author_id });
+      router.push(`/messages/${conversation.id}`);
+    } catch (err: any) {
+      alert(err.message || 'Failed to start conversation');
+    }
+  };
+
+  const handleShareRecipe = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      alert('Recipe link copied to clipboard');
+    } catch {
+      alert('Unable to copy recipe link');
+    }
+  };
+
+  const handleDeleteRecipe = async () => {
+    if (!recipe) return;
+    if (!confirm('Delete this recipe permanently? This cannot be undone.')) return;
+    const token = getStoredToken();
+    if (!token) {
+      setUser(null);
+      router.push('/auth/login');
+      return;
+    }
+    try {
+      setDeletingRecipe(true);
+      await deleteRecipe(recipe.id);
+      router.push('/');
+    } catch (err: unknown) {
+      const anyErr = err as { status?: number; message?: string };
+      if (anyErr.status === 401 || anyErr.message?.includes('Could not validate credentials')) {
+        setUser(null);
+        router.push('/auth/login');
+        return;
+      }
+      alert(anyErr.message || 'Failed to delete recipe');
+    } finally {
+      setDeletingRecipe(false);
     }
   };
 
@@ -204,6 +373,158 @@ export default function RecipeDetailPage() {
               </ol>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Comments</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isAuthenticated ? (
+                <div className="space-y-2">
+                  <Textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Add a comment..."
+                    rows={3}
+                  />
+                  <Button onClick={handleAddComment} disabled={commentSubmitting || !newComment.trim()}>
+                    <Send className="h-4 w-4 mr-2" />
+                    {commentSubmitting ? 'Posting...' : 'Post Comment'}
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Log in to comment on this recipe.</p>
+              )}
+
+              {commentsLoading ? (
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading comments...
+                </div>
+              ) : comments.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No comments yet.</p>
+              ) : (
+                <div className="space-y-1">
+                  {(() => {
+                    const renderThread = (parentId: number | null, depth: number) => {
+                      return childComments(parentId).map((comment) => {
+                        const canDelete =
+                          user &&
+                          (user.id === comment.user_id || user.id === recipe.author_id);
+                        const name = comment.user?.username || 'User';
+                        const rx = comment.reactions ?? [];
+                        return (
+                          <div
+                            key={comment.id}
+                            className={depth > 0 ? 'ml-4 sm:ml-8 pl-3 border-l-2 border-muted mt-3' : 'mt-3'}
+                          >
+                            <div className="rounded-lg border p-3 bg-card">
+                              <div className="flex gap-3">
+                                <UserAvatar username={name} size="sm" />
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div>
+                                      <p className="text-sm font-medium">{name}</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        {new Date(comment.created_at).toLocaleString()}
+                                      </p>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      {isAuthenticated && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 px-2"
+                                          onClick={() => {
+                                            setReplyingToId(
+                                              replyingToId === comment.id ? null : comment.id
+                                            );
+                                            setReplyText('');
+                                          }}
+                                        >
+                                          <Reply className="h-3.5 w-3.5 mr-1" />
+                                          Reply
+                                        </Button>
+                                      )}
+                                      {canDelete && (
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => handleDeleteComment(comment.id)}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <p className="text-sm mt-2 whitespace-pre-wrap">{comment.content}</p>
+                                  <div className="flex flex-wrap items-center gap-1 mt-3">
+                                    {REACTION_EMOJIS.map((emoji) => {
+                                      const summary = rx.find((r) => r.emoji === emoji);
+                                      const count = summary?.count ?? 0;
+                                      const active = summary?.reacted_by_me ?? false;
+                                      return (
+                                        <button
+                                          key={emoji}
+                                          type="button"
+                                          disabled={!isAuthenticated || reactionBusy === comment.id}
+                                          onClick={() => handleToggleReaction(comment.id, emoji)}
+                                          className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
+                                            active
+                                              ? 'border-primary bg-primary/10'
+                                              : 'border-transparent bg-muted/60 hover:bg-muted'
+                                          }`}
+                                        >
+                                          <span>{emoji}</span>
+                                          {count > 0 && <span className="text-muted-foreground">{count}</span>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  {isAuthenticated && replyingToId === comment.id && (
+                                    <div className="mt-3 space-y-2">
+                                      <Textarea
+                                        value={replyText}
+                                        onChange={(e) => setReplyText(e.target.value)}
+                                        placeholder="Write a reply..."
+                                        rows={2}
+                                      />
+                                      <div className="flex gap-2">
+                                        <Button
+                                          size="sm"
+                                          onClick={handlePostReply}
+                                          disabled={commentSubmitting || !replyText.trim()}
+                                        >
+                                          Post reply
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          onClick={() => {
+                                            setReplyingToId(null);
+                                            setReplyText('');
+                                          }}
+                                        >
+                                          Cancel
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {renderThread(comment.id, depth + 1)}
+                          </div>
+                        );
+                      });
+                    };
+                    return <>{renderThread(null, 0)}</>;
+                  })()}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Sidebar */}
@@ -260,6 +581,56 @@ export default function RecipeDetailPage() {
                   <span className="text-muted-foreground">Steps</span>
                   <span className="font-medium">{recipe.steps.length}</span>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {isAuthenticated && user?.id === recipe.author_id && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => router.push(`/recipes/${recipe.id}/edit`)}
+                    >
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Edit recipe
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      className="w-full"
+                      disabled={deletingRecipe}
+                      onClick={handleDeleteRecipe}
+                    >
+                      {deletingRecipe ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete recipe
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+                {isAuthenticated && user?.id !== recipe.author_id && (
+                  <Button onClick={handleMessageAuthor} className="w-full" variant="outline">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Message Author
+                  </Button>
+                )}
+                <Button onClick={handleShareRecipe} className="w-full" variant="outline">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share Recipe
+                </Button>
               </CardContent>
             </Card>
           </div>

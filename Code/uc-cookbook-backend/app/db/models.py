@@ -1,6 +1,17 @@
 from datetime import datetime
-from typing import List
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, JSON, Enum as SQLEnum, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
+    Text,
+    JSON,
+    Enum as SQLEnum,
+    UniqueConstraint,
+    Boolean,
+    CheckConstraint,
+)
 from sqlalchemy.orm import relationship
 import enum
 from app.db.session import Base
@@ -11,6 +22,12 @@ class DifficultyEnum(str, enum.Enum):
     easy = "easy"
     medium = "medium"
     hard = "hard"
+
+
+class VisibilityEnum(str, enum.Enum):
+    """Recipe visibility levels"""
+    public = "public"
+    private = "private"
 
 
 class User(Base):
@@ -26,6 +43,21 @@ class User(Base):
     # Relationships
     recipes = relationship("Recipe", back_populates="author", cascade="all, delete-orphan")
     cookbook_saves = relationship("CookbookSave", back_populates="user", cascade="all, delete-orphan")
+    recipe_comments = relationship("RecipeComment", back_populates="user", cascade="all, delete-orphan")
+    conversations_as_user_one = relationship(
+        "Conversation",
+        foreign_keys="Conversation.user_one_id",
+        back_populates="user_one",
+        cascade="all, delete-orphan",
+    )
+    conversations_as_user_two = relationship(
+        "Conversation",
+        foreign_keys="Conversation.user_two_id",
+        back_populates="user_two",
+        cascade="all, delete-orphan",
+    )
+    sent_messages = relationship("Message", back_populates="sender", cascade="all, delete-orphan")
+    comment_reactions = relationship("CommentReaction", back_populates="user", cascade="all, delete-orphan")
 
 
 class Recipe(Base):
@@ -41,6 +73,8 @@ class Recipe(Base):
     time_minutes = Column(Integer, nullable=False)
     difficulty = Column(SQLEnum(DifficultyEnum), nullable=False)
     image_url = Column(String(500), nullable=True)
+    is_published = Column(Boolean, nullable=False, default=False)
+    visibility = Column(SQLEnum(VisibilityEnum), nullable=False, default=VisibilityEnum.public)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -48,6 +82,7 @@ class Recipe(Base):
     # Relationships
     author = relationship("User", back_populates="recipes")
     cookbook_saves = relationship("CookbookSave", back_populates="recipe", cascade="all, delete-orphan")
+    comments = relationship("RecipeComment", back_populates="recipe", cascade="all, delete-orphan")
 
 
 class CookbookSave(Base):
@@ -67,3 +102,86 @@ class CookbookSave(Base):
     __table_args__ = (
         UniqueConstraint('user_id', 'recipe_id', name='unique_user_recipe'),
     )
+
+
+class RecipeComment(Base):
+    """Comments made by users on recipes"""
+    __tablename__ = "recipe_comments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    parent_id = Column(Integer, ForeignKey("recipe_comments.id"), nullable=True)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    recipe = relationship("Recipe", back_populates="comments")
+    user = relationship("User", back_populates="recipe_comments")
+    parent = relationship(
+        "RecipeComment",
+        remote_side=[id],
+        back_populates="replies",
+        foreign_keys=[parent_id],
+    )
+    replies = relationship(
+        "RecipeComment",
+        back_populates="parent",
+        foreign_keys=[parent_id],
+        cascade="all, delete-orphan",
+    )
+    comment_reactions = relationship(
+        "CommentReaction",
+        back_populates="comment",
+        cascade="all, delete-orphan",
+    )
+
+
+class CommentReaction(Base):
+    """Single emoji reaction per user per comment (change by posting again)."""
+    __tablename__ = "comment_reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("recipe_comments.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    emoji = Column(String(16), nullable=False)
+
+    comment = relationship("RecipeComment", back_populates="comment_reactions")
+    user = relationship("User", back_populates="comment_reactions")
+
+    __table_args__ = (
+        UniqueConstraint("comment_id", "user_id", name="uq_comment_reaction_user"),
+    )
+
+
+class Conversation(Base):
+    """Direct conversation between two users"""
+    __tablename__ = "conversations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_one_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_two_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user_one = relationship("User", foreign_keys=[user_one_id], back_populates="conversations_as_user_one")
+    user_two = relationship("User", foreign_keys=[user_two_id], back_populates="conversations_as_user_two")
+    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        UniqueConstraint("user_one_id", "user_two_id", name="unique_conversation_pair"),
+        CheckConstraint("user_one_id < user_two_id", name="check_user_order"),
+    )
+
+
+class Message(Base):
+    """Message sent inside a conversation"""
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    conversation = relationship("Conversation", back_populates="messages")
+    sender = relationship("User", back_populates="sent_messages")
