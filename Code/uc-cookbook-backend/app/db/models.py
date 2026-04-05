@@ -41,7 +41,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     
     # Relationships
-    recipes = relationship("Recipe", back_populates="author", cascade="all, delete-orphan")
+    recipes = relationship("Recipe", back_populates="author", cascade="all, delete-orphan", foreign_keys="Recipe.author_id")
     cookbook_saves = relationship("CookbookSave", back_populates="user", cascade="all, delete-orphan")
     recipe_comments = relationship("RecipeComment", back_populates="user", cascade="all, delete-orphan")
     conversations_as_user_one = relationship(
@@ -76,11 +76,16 @@ class Recipe(Base):
     is_published = Column(Boolean, nullable=False, default=False)
     visibility = Column(SQLEnum(VisibilityEnum), nullable=False, default=VisibilityEnum.public)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    # Optional attribution for forked/derived recipes
+    origin_recipe_id = Column(Integer, ForeignKey("recipes.id"), nullable=True)
+    origin_author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
-    author = relationship("User", back_populates="recipes")
+    author = relationship("User", back_populates="recipes", foreign_keys=[author_id])
+    origin_author = relationship("User", foreign_keys=[origin_author_id])
+    origin_recipe = relationship("Recipe", remote_side=[id], foreign_keys=[origin_recipe_id])
     cookbook_saves = relationship("CookbookSave", back_populates="recipe", cascade="all, delete-orphan")
     comments = relationship("RecipeComment", back_populates="recipe", cascade="all, delete-orphan")
 

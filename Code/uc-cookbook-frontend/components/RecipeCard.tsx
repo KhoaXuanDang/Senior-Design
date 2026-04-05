@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Clock, ChefHat, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { Recipe } from '@/lib/types';
@@ -12,6 +13,7 @@ interface RecipeCardProps {
 }
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
+  const router = useRouter();
   const difficultyColors = {
     easy: 'bg-green-100 text-green-800 hover:bg-green-200',
     medium: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
@@ -41,6 +43,23 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           <h3 className="font-semibold text-lg line-clamp-2 group-hover:text-primary transition-colors">
             {recipe.title}
           </h3>
+          {recipe.origin_recipe_id && (
+            <div className="mt-1 flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/recipes/${recipe.origin_recipe_id}`);
+                }}
+                aria-label="View original recipe"
+                className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground hover:bg-muted/80"
+              >
+                Forked
+              </button>
+              {typeof recipe.fork_count === 'number' && (
+                <span className="text-xs text-muted-foreground">{recipe.fork_count} forks</span>
+              )}
+            </div>
+          )}
           <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
             {recipe.description}
           </p>

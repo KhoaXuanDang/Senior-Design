@@ -35,6 +35,12 @@ class RecipeService:
             visibility=VisibilityEnum(recipe_data.visibility),
             author_id=user.id
         )
+
+        # Apply structured origin attribution if provided
+        if getattr(recipe_data, "origin_recipe_id", None):
+            db_recipe.origin_recipe_id = recipe_data.origin_recipe_id
+        if getattr(recipe_data, "origin_author_id", None):
+            db_recipe.origin_author_id = recipe_data.origin_author_id
         
         db.add(db_recipe)
         db.commit()

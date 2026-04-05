@@ -42,11 +42,21 @@ async def get_recipes(
         offset=offset
     )
     
+    # Build responses and include fork_count for each recipe
+    recipe_responses = []
+    from app.db.models import Recipe as RecipeModel
+    for r in recipes:
+        res = RecipeResponse.model_validate(r)
+        # compute fork count (number of recipes that reference this as origin)
+        fork_count = db.query(RecipeModel).filter(RecipeModel.origin_recipe_id == r.id).count()
+        res.fork_count = fork_count
+        recipe_responses.append(res)
+
     return RecipesResponse(
-        recipes=[RecipeResponse.model_validate(r) for r in recipes],
+        recipes=recipe_responses,
         total=total,
         limit=limit,
-        offset=offset
+        offset=offset,
     )
 
 
@@ -68,7 +78,10 @@ async def create_recipe(
         Created recipe
     """
     recipe = RecipeService.create_recipe(db, recipe_data, current_user)
-    return RecipeResponse.model_validate(recipe)
+    resp = RecipeResponse.model_validate(recipe)
+    from app.db.models import Recipe as RecipeModel
+    resp.fork_count = db.query(RecipeModel).filter(RecipeModel.origin_recipe_id == recipe.id).count()
+    return resp
 
 
 @router.get("/{recipe_id}", response_model=RecipeResponse)
@@ -104,7 +117,10 @@ async def get_recipe(
             detail="Not authorized to view this recipe"
         )
     
-    return RecipeResponse.model_validate(recipe)
+    resp = RecipeResponse.model_validate(recipe)
+    from app.db.models import Recipe as RecipeModel
+    resp.fork_count = db.query(RecipeModel).filter(RecipeModel.origin_recipe_id == recipe.id).count()
+    return resp
 
 
 @router.put("/{recipe_id}", response_model=RecipeResponse)

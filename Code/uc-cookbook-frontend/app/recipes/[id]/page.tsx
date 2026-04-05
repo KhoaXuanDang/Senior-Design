@@ -6,6 +6,7 @@ import Image from 'next/image';
 import {
   getRecipeById,
   saveRecipeToCookbook,
+  createRecipe,
   getStoredToken,
   getRecipeComments,
   addRecipeComment,
@@ -17,6 +18,7 @@ import {
 import { useAuth } from '@/lib/auth';
 import type { Recipe, RecipeComment } from '@/lib/types';
 import { UserAvatar } from '@/components/UserAvatar';
+import Link from 'next/link';
 import {
   Clock,
   ChefHat,
@@ -215,6 +217,58 @@ export default function RecipeDetailPage() {
     }
   };
 
+  const handleCloneRecipe = async () => {
+    if (!recipe) return;
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+
+    // Build a forked recipe payload and credit original author in description
+    const creditLine = recipe.author ? `Forked from ${recipe.author.username} (Recipe #${recipe.id}).` : `Forked from Recipe #${recipe.id}.`;
+    const newDescription = `${creditLine}\n\nOriginal recipe:\n${recipe.description}`;
+
+    // Open modal to allow editing before cloning
+    setCloneTitle(recipe.title + ' (Fork)');
+    setCloneVisibility(recipe.visibility);
+    setCloneIsPublished(false);
+    setShowCloneModal(true);
+  };
+
+  const [showCloneModal, setShowCloneModal] = useState(false);
+  const [cloneTitle, setCloneTitle] = useState('');
+  const [cloneVisibility, setCloneVisibility] = useState<'public' | 'private'>('public');
+  const [cloneIsPublished, setCloneIsPublished] = useState(false);
+  const [cloning, setCloning] = useState(false);
+
+  const submitClone = async () => {
+    if (!recipe) return;
+    try {
+      setCloning(true);
+      const payload = {
+        title: cloneTitle,
+        description: `${recipe.author ? `Forked from ${recipe.author.username} (Recipe #${recipe.id}).` : `Forked from Recipe #${recipe.id}.`}\n\nOriginal recipe:\n${recipe.description}`,
+        ingredients: recipe.ingredients,
+        steps: recipe.steps,
+        tags: recipe.tags,
+        time_minutes: recipe.time_minutes,
+        difficulty: recipe.difficulty,
+        image_url: recipe.image_url,
+        is_published: cloneIsPublished,
+        visibility: cloneVisibility,
+        origin_recipe_id: recipe.id,
+        origin_author_id: recipe.author_id,
+      };
+      const created = await createRecipe(payload as any);
+      setShowCloneModal(false);
+      router.push(`/recipes/${created.id}/edit`);
+    } catch (err: any) {
+      alert(err.message || 'Failed to clone recipe');
+    } finally {
+      setCloning(false);
+    }
+  };
+
   const handleDeleteRecipe = async () => {
     if (!recipe) return;
     if (!confirm('Delete this recipe permanently? This cannot be undone.')) return;
@@ -304,7 +358,19 @@ export default function RecipeDetailPage() {
 
           {/* Title and Description */}
           <div>
-            <h1 className="text-4xl font-bold tracking-tight mb-4">{recipe.title}</h1>
+            <h1 className="text-4xl font-bold tracking-tight mb-2">{recipe.title}</h1>
+            {recipe.origin_author || recipe.origin_recipe_id ? (
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm text-muted-foreground">Forked from</span>
+                {recipe.origin_recipe_id ? (
+                  <Link href={`/recipes/${recipe.origin_recipe_id}`} className="text-sm font-medium text-primary hover:underline">
+                    {recipe.origin_author?.username || `Recipe #${recipe.origin_recipe_id}`}
+                  </Link>
+                ) : (
+                  <span className="text-sm font-medium text-muted-foreground">{recipe.origin_author?.username}</span>
+                )}
+              </div>
+            ) : null}
             <p className="text-lg text-muted-foreground">{recipe.description}</p>
           </div>
 
@@ -581,6 +647,10 @@ export default function RecipeDetailPage() {
                   <span className="text-muted-foreground">Steps</span>
                   <span className="font-medium">{recipe.steps.length}</span>
                 </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Forks</span>
+                  <span className="font-medium">{recipe.fork_count ?? 0}</span>
+                </div>
               </CardContent>
             </Card>
 
@@ -626,6 +696,50 @@ export default function RecipeDetailPage() {
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Message Author
                   </Button>
+                )}
+                {isAuthenticated && (
+                  <>
+                    <Button onClick={handleCloneRecipe} className="w-full" variant="secondary">
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Clone / Fork this recipe
+                    </Button>
+                    {showCloneModal && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center">
+                        <div className="fixed inset-0 bg-black/40" onClick={() => setShowCloneModal(false)} />
+                        <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6 z-10">
+                          <h3 className="text-lg font-medium mb-3">Create a copy</h3>
+                          <label className="block text-sm mb-1">Title</label>
+                          <input
+                            className="w-full border rounded px-3 py-2 mb-3"
+                            value={cloneTitle}
+                            onChange={(e) => setCloneTitle(e.target.value)}
+                          />
+                          <div className="flex items-center gap-3 mb-3">
+                            <label className="flex items-center gap-2">
+                              <input
+                                type="checkbox"
+                                checked={cloneIsPublished}
+                                onChange={(e) => setCloneIsPublished(e.target.checked)}
+                              />
+                              <span className="text-sm">Publish immediately</span>
+                            </label>
+                            <div className="flex-1" />
+                            <label className="text-sm">Visibility</label>
+                            <select value={cloneVisibility} onChange={(e) => setCloneVisibility(e.target.value as any)} className="border rounded px-2 py-1">
+                              <option value="public">Public</option>
+                              <option value="private">Private</option>
+                            </select>
+                          </div>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setShowCloneModal(false)}>Cancel</Button>
+                            <Button onClick={submitClone} disabled={cloning || !cloneTitle.trim()}>
+                              {cloning ? 'Cloning...' : 'Create copy'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
                 <Button onClick={handleShareRecipe} className="w-full" variant="outline">
                   <Share2 className="h-4 w-4 mr-2" />

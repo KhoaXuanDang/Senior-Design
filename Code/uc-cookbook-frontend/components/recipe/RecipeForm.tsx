@@ -158,6 +158,10 @@ export function RecipeForm(props: {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Debug: log when submit is triggered to help trace unresponsive Save button
+    // Remove this log after debugging
+    // eslint-disable-next-line no-console
+    console.debug('[RecipeForm] handleSubmit triggered', { submitting });
     setErrors({});
 
     try {

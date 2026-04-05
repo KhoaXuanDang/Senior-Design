@@ -1,17 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getConversations } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Conversation } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
 export default function ConversationsPage() {
   const router = useRouter();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,13 +66,34 @@ export default function ConversationsPage() {
           conversations.map((conversation) => (
             <Card key={conversation.id}>
               <CardHeader>
-                <CardTitle className="text-lg">Conversation #{conversation.id}</CardTitle>
+                <CardTitle className="text-lg">
+                  {user ? (
+                    // Prefer showing username if API returned nested user objects
+                    conversation.user_one?.username || conversation.user_two?.username ? (
+                      `Conversation with ${
+                        (conversation.user_one?.id === user.id ? conversation.user_two?.username : conversation.user_one?.username) || `user ${conversation.id}`
+                      }`
+                    ) : (
+                      // Fallback to numeric id when username is not present
+                      `Conversation with user ${
+                        conversation.user_one_id === user.id ? conversation.user_two_id : conversation.user_one_id
+                      }`
+                    )
+                  ) : (
+                    `Conversation #${conversation.id}`
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  Started {timeAgo(conversation.created_at)}{conversation.updated_at ? ` • updated ${timeAgo(conversation.updated_at)}` : ''}
+                </CardDescription>
               </CardHeader>
               <CardContent className="flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Updated {new Date(conversation.updated_at || conversation.created_at).toLocaleString()}
-                </p>
-                <Button onClick={() => router.push(`/messages/${conversation.id}`)}>Open</Button>
+                <p className="text-sm text-muted-foreground">{new Date(conversation.updated_at || conversation.created_at).toLocaleString()}</p>
+                <Button asChild>
+                  <Link href={`/messages/${conversation.id}`} aria-label={`Open conversation ${conversation.id}`}>
+                    Open
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))
@@ -79,4 +101,20 @@ export default function ConversationsPage() {
       </div>
     </div>
   );
+}
+
+function timeAgo(dateStr?: string) {
+  if (!dateStr) return 'unknown';
+  const then = new Date(dateStr).getTime();
+  const diff = Date.now() - then;
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 60) return `${seconds}s ago`;
+  if (minutes < 60) return `${minutes}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString();
 }

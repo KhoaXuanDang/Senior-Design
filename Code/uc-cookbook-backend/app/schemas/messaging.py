@@ -29,6 +29,8 @@ class ConversationResponse(BaseModel):
     id: int
     user_one_id: int
     user_two_id: int
+    user_one: Optional[AuthorResponse] = None
+    user_two: Optional[AuthorResponse] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

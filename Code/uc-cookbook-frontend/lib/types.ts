@@ -24,6 +24,12 @@ export interface Recipe {
     id: number;
     username: string;
   };
+  origin_recipe_id?: number;
+  origin_author?: {
+    id: number;
+    username: string;
+  };
+  fork_count?: number;
   created_at: string;
   updated_at?: string;
 }
@@ -121,6 +127,14 @@ export interface Conversation {
   id: number;
   user_one_id: number;
   user_two_id: number;
+  user_one?: {
+    id: number;
+    username: string;
+  };
+  user_two?: {
+    id: number;
+    username: string;
+  };
   created_at: string;
   updated_at?: string;
 }

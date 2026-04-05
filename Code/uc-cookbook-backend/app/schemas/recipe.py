@@ -21,7 +21,9 @@ class RecipeBase(BaseModel):
 
 class CreateRecipeRequest(RecipeBase):
     """Schema for creating a recipe"""
-    pass
+    # Optional structured attribution (used when cloning/forking)
+    origin_recipe_id: Optional[int] = None
+    origin_author_id: Optional[int] = None
 
 
 class UpdateRecipeRequest(BaseModel):
@@ -43,6 +45,10 @@ class RecipeResponse(RecipeBase):
     id: int
     author_id: int
     author: Optional[AuthorResponse] = None
+    origin_recipe_id: Optional[int] = None
+    origin_author_id: Optional[int] = None
+    origin_author: Optional[AuthorResponse] = None
+    fork_count: int = 0
     created_at: datetime
     updated_at: Optional[datetime] = None
     

@@ -46,12 +46,19 @@ class MessagingService:
 
     @staticmethod
     def list_conversations(db: Session, user: User) -> List[Conversation]:
-        return db.query(Conversation).filter(
-            or_(
-                Conversation.user_one_id == user.id,
-                Conversation.user_two_id == user.id,
+        # Load related user objects so API can include usernames in responses
+        return (
+            db.query(Conversation)
+            .options(joinedload(Conversation.user_one), joinedload(Conversation.user_two))
+            .filter(
+                or_(
+                    Conversation.user_one_id == user.id,
+                    Conversation.user_two_id == user.id,
+                )
             )
-        ).order_by(Conversation.updated_at.desc(), Conversation.created_at.desc()).all()
+            .order_by(Conversation.updated_at.desc(), Conversation.created_at.desc())
+            .all()
+        )
 
     @staticmethod
     def get_conversation(db: Session, conversation_id: int) -> Conversation:
